@@ -15,15 +15,10 @@ public class HashtableOpen8to16Impl implements HashtableOpen8to16 {
         this.actualCapacity = INITIAL_CAPACITY;
     }
 
-    private int hashcode(int key, int capacity) {
-        return Math.abs(key % capacity);
-    }
-
     @Override
     public void insert(int key, Object value) {
         if (containsKey(key)) {
             int hashIndex = findKeyIndex(key);
-//            buckets[hashIndex].setKey(key);
             buckets[hashIndex].setValue(value);
         } else {
             increaseCapacity();
@@ -37,30 +32,6 @@ public class HashtableOpen8to16Impl implements HashtableOpen8to16 {
         }
     }
 
-    private void increaseCapacity() {
-        if (size + 1 > MAX_CAPACITY) {
-            throw new IllegalStateException();
-        }
-        if (size == actualCapacity && actualCapacity < MAX_CAPACITY) {
-            actualCapacity = actualCapacity * 2;
-            buckets = redefineHashtable(buckets, actualCapacity);
-        }
-    }
-
-    public HashNode[] redefineHashtable(HashNode[] initialHashtable, int capacity) {
-        HashNode[] redefinedHashtable = new HashNode[capacity];
-        int newIndex;
-        for (HashNode node : initialHashtable) {
-            if (node == null || node.getValue() == dummy.getValue()) continue;
-            newIndex = hashcode(node.getKey(), capacity);
-            while (redefinedHashtable[newIndex] != null && redefinedHashtable[newIndex].getKey() != node.getKey()) {
-                newIndex++;
-                newIndex %= actualCapacity;
-            }
-            redefinedHashtable[newIndex] = node;
-        }
-        return redefinedHashtable;
-    }
 
     @Override
     public void remove(int key) {
@@ -80,14 +51,6 @@ public class HashtableOpen8to16Impl implements HashtableOpen8to16 {
         }
     }
 
-
-    private void decreaseCapacity() {
-        if (size == actualCapacity / 4 && actualCapacity > MIN_CAPACITY) {
-            actualCapacity = actualCapacity / 2;
-            buckets = redefineHashtable(buckets, actualCapacity);
-        }
-    }
-
     @Override
     public Object search(int key) {
         if (containsKey(key)) {
@@ -96,23 +59,6 @@ public class HashtableOpen8to16Impl implements HashtableOpen8to16 {
         } else {
             return null;
         }
-    }
-
-    private int findKeyIndex(int key) {
-        int hashIndex = hashcode(key, actualCapacity);
-        int counter = 0;
-        while (buckets[hashIndex] != null) {
-            if (counter > actualCapacity) {
-                return -1;
-            }
-            if (buckets[hashIndex].getKey() == key) {
-                return hashIndex;
-            }
-            hashIndex++;
-            hashIndex %= actualCapacity;
-            counter++;
-        }
-        return 0;
     }
 
     @Override
@@ -135,12 +81,65 @@ public class HashtableOpen8to16Impl implements HashtableOpen8to16 {
         return keys;
     }
 
-    public boolean containsKey(int key) {
+    private int hashcode(int key, int capacity) {
+        return Math.abs(key % capacity);
+    }
+
+    private boolean containsKey(int key) {
         for (HashNode node : buckets) {
             if (node != null && node.getKey() == key && node.getValue().equals(key)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private void increaseCapacity() {
+        if (size + 1 > MAX_CAPACITY) {
+            throw new IllegalStateException();
+        }
+        if (size == actualCapacity && actualCapacity < MAX_CAPACITY) {
+            actualCapacity = actualCapacity * 2;
+            buckets = redefineHashtable(buckets, actualCapacity);
+        }
+    }
+
+    private void decreaseCapacity() {
+        if (size == actualCapacity / 4 && actualCapacity > MIN_CAPACITY) {
+            actualCapacity = actualCapacity / 2;
+            buckets = redefineHashtable(buckets, actualCapacity);
+        }
+    }
+
+    private HashNode[] redefineHashtable(HashNode[] initialHashtable, int capacity) {
+        HashNode[] redefinedHashtable = new HashNode[capacity];
+        int newIndex;
+        for (HashNode node : initialHashtable) {
+            if (node == null || node.getValue() == dummy.getValue()) continue;
+            newIndex = hashcode(node.getKey(), capacity);
+            while (redefinedHashtable[newIndex] != null && redefinedHashtable[newIndex].getKey() != node.getKey()) {
+                newIndex++;
+                newIndex %= actualCapacity;
+            }
+            redefinedHashtable[newIndex] = node;
+        }
+        return redefinedHashtable;
+    }
+
+    private int findKeyIndex(int key) {
+        int hashIndex = hashcode(key, actualCapacity);
+        int counter = 0;
+        while (buckets[hashIndex] != null) {
+            if (counter > actualCapacity) {
+                return -1;
+            }
+            if (buckets[hashIndex].getKey() == key) {
+                return hashIndex;
+            }
+            hashIndex++;
+            hashIndex %= actualCapacity;
+            counter++;
+        }
+        return 0;
     }
 }
